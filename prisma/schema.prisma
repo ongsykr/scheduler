@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uuid String @id @default(uuid()) @db.Uuid
+  name String 
+  id String
+  password String
+  friendsId String
+  
+  // friend User[] @relation(name: "usersFriends", fields: [friendsId], references: [uuid])
+  // symmetricFriend User[] @relation(name: "usersFriends", fields: [friendsId], references: [uuid])
+  schedule Schedule[] 
+  friend User[] @relation(name: "usersFriends")
+  symmetricFriend User[] @relation(name: "usersFriends")
+
+  friendSendRequests FriendRequest[] @relation(name: "sender")
+  friendReceiveRequests FriendRequest[] @relation(name: "receiver")
+
+  @@map("user")
+}
+
+model Schedule {
+  id Int @id @default(autoincrement())
+  title String
+  body String?
+  startingDate DateTime @map("starting_date")
+  endingDate DateTime? @map("ending_date")
+  cycle Int?
+  bool Boolean
+  userId String @db.Uuid
+  
+  user User @relation(fields: [userId], references: [uuid])
+
+  @@map("todo")
+}
+
+model FriendRequest {
+  id Int @id @default(autoincrement())
+  senderId String @db.Uuid
+  receiverId String @db.Uuid
+  request Boolean @default(false)
+
+  sender User @relation(name: "sender", fields: [senderId], references: [uuid])
+  receiver User @relation(name: "receiver", fields: [receiverId], references: [uuid])
+
+  @@map("friend_request")
+}
+
