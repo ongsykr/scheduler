@@ -1,8 +1,8 @@
 import {
   IsNotEmpty,
   IsString,
-  IsSurrogatePair,
   MaxLength,
+  MinLength,
 } from '@nestjs/class-validator';
 
 export class loginDto {
@@ -12,7 +12,7 @@ export class loginDto {
 
   @IsNotEmpty()
   @IsString()
-  @MaxLength(8)
+  @MinLength(4)
   password: string;
 
   @IsNotEmpty()
