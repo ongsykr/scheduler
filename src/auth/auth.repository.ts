@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { error } from 'console';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -31,12 +32,30 @@ export class AuthRepository {
 
   async findUser(id: string) {
     return this.prismaService.user
-      .findUnique({ where: { id } })
+      .findUnique({ where: { id }, select: { uuid: true, password: true } })
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           throw new InternalServerErrorException('database error');
         }
         throw new InternalServerErrorException('Unknown Error');
       });
+  }
+
+  async findUserByUuid(uuid: string) {
+    const user = await this.prismaService.user.findUnique({ where: { uuid } });
+    return user;
+    //   return await this.prismaService.user
+    //     .findFirst({ where: { uuid } })
+    //     .catch((error) => {
+    //       console.log(error);
+    //       if (error instanceof PrismaClientKnownRequestError) {
+    //         throw new InternalServerErrorException(
+    //           'findUserByUuid -> database error',
+    //         );
+    //       }
+    //       throw new InternalServerErrorException(
+    //         'findUserByUuid-> unknown error',
+    //       );
+    //     });
   }
 }

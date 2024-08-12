@@ -28,16 +28,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid password');
     }
 
-    let accessToken = this.getAccessToken({ user });
-    let refreshToken = this.getRefreshToken({ user });
+    const accessToken = this.getAccessToken(user.uuid);
+    const refreshToken = this.getRefreshToken(user.uuid);
 
     return { accessToken, refreshToken };
   }
 
-  getRefreshToken({ user }) {
+  getRefreshToken(userUuid: string) {
     return this.jwtService.sign(
       {
-        id: user.id,
+        uuid: userUuid,
       },
       {
         secret: this.configService.get<string>('REFRESH_TOKEN_KEY'),
@@ -46,10 +46,10 @@ export class AuthService {
     );
   }
 
-  getAccessToken({ user }) {
+  getAccessToken(userUuid: string) {
     const accessToken = this.jwtService.sign(
       {
-        id: user.id,
+        uuid: userUuid,
       },
       {
         secret: this.configService.get<string>('ACCESS_TOKEN_KEY'),
@@ -60,7 +60,7 @@ export class AuthService {
   }
 
   async create(id: string, password: string, name: string) {
-    let user = this.authRepository.findUser(id);
+    const user = this.authRepository.findUser(id);
     if (!user) {
       throw new ConflictException(`${id} already exists`);
     }
@@ -76,7 +76,7 @@ export class AuthService {
     }
     const data = this.jwtService.decode(refresh);
     const user = await this.authRepository.findUser(data.id);
-    const newAccess = await this.getAccessToken({ user });
+    const newAccess = await this.getAccessToken(user.uuid);
     return newAccess;
   }
 

@@ -24,6 +24,7 @@ model User {
 }
 
 model Friend {
+  id Int @id @default(autoincrement())
   userUuid1 String @db.Uuid 
   userUuid2 String @db.Uuid 
   
@@ -52,12 +53,12 @@ model Schedule {
 model FriendRequest {
   id Int @id @default(autoincrement())
   message String
-  senderId String @db.Uuid
-  receiverId String @db.Uuid
+  senderUuid String @db.Uuid
+  receiverUuid String @db.Uuid
   request Boolean @default(false)
 
-  sender User @relation(name: "sender", fields: [senderId], references: [uuid])
-  receiver User @relation(name: "receiver", fields: [receiverId], references: [uuid])
+  sender User @relation(name: "sender", fields: [senderUuid], references: [uuid])
+  receiver User @relation(name: "receiver", fields: [receiverUuid], references: [uuid])
 
   @@map("friend_request")
 }
