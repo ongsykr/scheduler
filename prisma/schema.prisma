@@ -36,7 +36,7 @@ model Friend {
 }
 
 model Schedule {
-  id Int @id @default(autoincrement())
+  id Int @default(autoincrement())
   title String
   body String?
   startingDate DateTime @map("starting_date")
@@ -47,6 +47,7 @@ model Schedule {
   
   user User @relation(fields: [userId], references: [uuid])
 
+  @@id([id, userId])
   @@map("todo")
 }
 

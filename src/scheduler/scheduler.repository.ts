@@ -3,10 +3,82 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { TodoDto } from './dto/todo.dto';
 import { error } from 'console';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { updateScheduleDto } from './dto/updateSchedule.dto';
 
 @Injectable()
 export class SchedulerRepository {
   constructor(private prismaService: PrismaService) {}
+
+  findAllSchedule(user: string) {
+    return this.prismaService.schedule
+      .findMany({
+        where: {
+          userId: user,
+        },
+        select: {
+          title: true,
+          body: true,
+          startingDate: true,
+          endingDate: true,
+          cycle: true,
+          bool: true,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findAllSchedule',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in findAllSchedule',
+        );
+      });
+  }
+
+  findAllFriend1(user: string) {
+    return this.prismaService.friend
+      .findMany({
+        where: {
+          userUuid1: user,
+        },
+        select: {
+          userUuid2: true,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findAllFriend1',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in findAllFriend1',
+        );
+      });
+  }
+
+  findAllFriend2(user: string) {
+    return this.prismaService.friend
+      .findMany({
+        where: {
+          userUuid2: user,
+        },
+        select: {
+          userUuid1: true,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findAllFriend2',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in findAllFriend2',
+        );
+      });
+  }
 
   addTodo(userid: string, todo: TodoDto) {
     return this.prismaService.schedule
@@ -189,5 +261,41 @@ export class SchedulerRepository {
         }
         throw new InternalServerErrorException('unknown error in findFriendId');
       });
+  }
+
+  updateSchedule(user, id: number, updateData: updateScheduleDto) {
+    return this.prismaService.schedule.update({
+      where: {
+        userId: user,
+        id,
+      },
+      data: updateData,
+    });
+  }
+
+  deleteSchedule(user, id: number) {
+    console.log(`${user}'s ${id} schedule deleted.`);
+    return this.prismaService.schedule.delete({
+      where: {
+        id,
+        userId: user,
+      },
+    });
+  }
+
+  findSchedule(user, id: number) {
+    return this.prismaService.schedule.findUnique({
+      where: {
+        id,
+        userId: user,
+      },
+    });
+  }
+
+  findUserIdByUUid(uuid: string) {
+    return this.prismaService.user.findUnique({
+      where: { uuid },
+      select: { id: true },
+    });
   }
 }
