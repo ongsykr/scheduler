@@ -3,6 +3,9 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
+  NotFoundException,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -16,6 +19,7 @@ import { getUser } from 'src/auth/guard/decorator/getUser.decorator';
 import { deleteFriendDto } from './dto/deleteFriend.dto';
 import { updateScheduleDto } from './dto/updateSchedule.dto';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
+import { scheduleWithFriendDto } from './dto/scheduleWithFriend.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('scheduler')
@@ -48,11 +52,11 @@ export class SchedulerController {
     return this.schedulerService.acceptRequest(body.requestId, body.request);
   }
 
-  @Delete('/friend')
+  @Delete('/friend/:friendId')
   @ApiOperation({ summary: 'delete friend.' })
   @ApiBody({ type: deleteFriendDto })
-  deletefriend(@getUser() user: string, @Body() body: deleteFriendDto) {
-    return this.schedulerService.deleteFriend(user, body.friendId);
+  deletefriend(@getUser() user: string, @Param('friendId') friendId: string) {
+    return this.schedulerService.deleteFriend(user, friendId);
   }
 
   @Put('/update')
@@ -62,11 +66,11 @@ export class SchedulerController {
     return this.schedulerService.updateSchedule(user, body.id, body);
   }
 
-  @Delete('/schedule')
-  @ApiOperation({ summary: 'delete schedule' })
-  @ApiBody({ type: updateScheduleDto })
-  deleteSchedule(@getUser() user: string, @Body() body: updateScheduleDto) {
-    return this.schedulerService.deleteSchedule(user, body.id);
+  @Delete('/schedule/:id')
+  @ApiOperation({ summary: 'delete schedule by id' })
+  deleteSchedule(@getUser() user: string, @Param('id') id: number) {
+    console.log(user, id);
+    return this.schedulerService.deleteSchedule(user, id);
   }
 
   @Get('/all')
@@ -76,8 +80,24 @@ export class SchedulerController {
   }
 
   @Get('/friends')
-  @ApiOperation({ summary: 'all friends.' })
+  @ApiOperation({ summary: 'all friends' })
   findAllFriend(@getUser() user: string) {
     return this.schedulerService.findAllFriend(user);
+  }
+
+  @Get('/schedule/:id')
+  @ApiOperation({ summary: "get someone's schedule" })
+  async getSpecSchedule(@getUser() user: string, @Param('id') id: string) {
+    return await this.schedulerService.getSpecSchedule(user, id);
+  }
+
+  @Post('/schedule/friend')
+  @ApiOperation({ summary: 'create schedule with friend' })
+  @ApiBody({ type: scheduleWithFriendDto })
+  schedulewithFriend(
+    @getUser() user: string,
+    @Body() body: scheduleWithFriendDto,
+  ) {
+    return this.schedulerService.scheduleWithFriend(user, body);
   }
 }

@@ -6,6 +6,7 @@ import {
   IsString,
 } from '@nestjs/class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsDateString } from 'class-validator';
 
 export class TodoDto {
   @ApiProperty()
@@ -19,14 +20,14 @@ export class TodoDto {
   body: string;
 
   @ApiProperty()
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
-  startingDate: Date;
+  startingDate: string;
 
   @ApiProperty({ required: false })
-  @IsDate()
+  @IsDateString()
   @IsOptional()
-  endingDate: Date;
+  endingDate: string;
 
   @ApiProperty({ example: '4', required: false })
   @IsInt()

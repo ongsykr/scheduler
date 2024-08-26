@@ -1,16 +1,39 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { SchedulerRepository } from './scheduler.repository';
 import { TodoDto } from './dto/todo.dto';
 import { updateScheduleDto } from './dto/updateSchedule.dto';
-import { freemem } from 'os';
+import { scheduleWithFriendDto } from './dto/scheduleWithFriend.dto';
 
 @Injectable()
 export class SchedulerService {
   constructor(private schedulerRepository: SchedulerRepository) {}
+
+  async scheduleWithFriend(user: string, data: scheduleWithFriendDto) {
+    const friend = await this.schedulerRepository.findUserById(data.friendId);
+    if (!(await this.checkFriend(user, friend.uuid))) {
+      throw new NotFoundException(`${data.friendId} isn't your friend.`);
+    }
+    const todo: TodoDto = data;
+    this.addTodo(user, todo);
+    this.addTodo(friend.uuid, todo);
+    return;
+  }
+
+  async getSpecSchedule(user: string, id: string) {
+    const spec = await this.schedulerRepository.findUserById(id);
+    if (!spec) {
+      throw new NotFoundException(`${id} doesn't exist.`);
+    }
+    if (!(await this.checkFriend(user, spec.uuid))) {
+      throw new NotFoundException(`${id} isn't your friend.`);
+    }
+    return this.findAllSchedule(spec.uuid);
+  }
 
   findAllSchedule(user: string) {
     return this.schedulerRepository.findAllSchedule(user);
@@ -39,11 +62,17 @@ export class SchedulerService {
     return await this.schedulerRepository.addTodo(userUuid, todo);
   }
 
-  async friendRequest(user, receiverId: string, message: string) {
+  async friendRequest(user: string, receiverId: string, message: string) {
     const receiver = await this.schedulerRepository.findUserById(receiverId);
-    if (user === receiver) {
-      throw new BadRequestException(
+    if (user === receiver.uuid) {
+      throw new InternalServerErrorException(
         'cannot send a friend request to yourself.',
+      );
+    }
+    console.log('check friend: ', this.checkFriend(user, receiver.uuid));
+    if (await this.checkFriend(user, receiver.uuid)) {
+      throw new InternalServerErrorException(
+        `Friendship already exists between ${user} and ${receiver.uuid}.`,
       );
     }
     return await this.schedulerRepository.createFriendRequest(
@@ -54,9 +83,9 @@ export class SchedulerService {
   }
 
   async acceptRequest(requestId: number, request: boolean) {
-    console.log(request);
     const friendRequest =
       await this.schedulerRepository.findFriendRequest(requestId);
+    console.log('friendRequestId = ', friendRequest);
     if (!friendRequest) {
       throw new NotFoundException(`${requestId} request doesn't exist.`);
     }
@@ -77,29 +106,55 @@ export class SchedulerService {
   async deleteFriend(user, friendId: string) {
     const friend = await this.schedulerRepository.findUserById(friendId);
     const friendUuid = friend.uuid;
+    console.log('uuid ', friendUuid);
     let friendShip = await this.schedulerRepository.findFriendId(
       user,
       friendUuid,
     );
+    console.log(friendShip);
     if (!friendShip) {
       friendShip = await this.schedulerRepository.findFriendId(
         friendUuid,
         user,
       );
+      console.log(friendShip);
     }
+
+    if (!friendShip) {
+      throw new NotFoundException(`can't find ${friendId}`);
+    }
+
     const id = friendShip.id;
+    console.log(id);
     return await this.schedulerRepository.deleteFriend(id);
   }
 
-  async updateSchedule(user, id: number, updateData: updateScheduleDto) {
+  async updateSchedule(
+    user: string,
+    id: number,
+    updateData: updateScheduleDto,
+  ) {
+    if (this.schedulerRepository.findSchedule(user, id)) {
+      throw new NotFoundException(`${id} schedule doesn't exist.`);
+    }
     return this.schedulerRepository.updateSchedule(user, id, updateData);
   }
 
-  async deleteSchedule(user, id: number) {
+  async deleteSchedule(user: string, id: number) {
     const schedule = await this.schedulerRepository.findSchedule(user, id);
+    console.log(schedule);
     if (!schedule) {
       throw new NotFoundException(`${user}'s ${id} schedule doesn't exist.`);
     }
-    return this.schedulerRepository.deleteSchedule(user, id);
+    return await this.schedulerRepository.deleteSchedule(user, id);
+  }
+
+  async checkFriend(user: string, id: string): Promise<boolean> {
+    let friend = await this.schedulerRepository.findFriendShip(user, id);
+    console.log('friend: ', friend);
+    if (!friend) {
+      friend = await this.schedulerRepository.findFriendShip(id, user);
+    }
+    return !!friend;
   }
 }

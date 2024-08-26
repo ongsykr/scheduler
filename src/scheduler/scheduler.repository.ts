@@ -1,16 +1,36 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TodoDto } from './dto/todo.dto';
-import { error } from 'console';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { updateScheduleDto } from './dto/updateSchedule.dto';
+import { strict } from 'assert';
 
 @Injectable()
 export class SchedulerRepository {
   constructor(private prismaService: PrismaService) {}
 
-  findAllSchedule(user: string) {
-    return this.prismaService.schedule
+  async findFriendShip(user1: string, user2: string) {
+    return await this.prismaService.friend
+      .findFirst({
+        where: {
+          userUuid1: user1,
+          userUuid2: user2,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findFriendShip',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in findFriendShip',
+        );
+      });
+  }
+
+  async findAllSchedule(user: string) {
+    return await this.prismaService.schedule
       .findMany({
         where: {
           userId: user,
@@ -36,8 +56,8 @@ export class SchedulerRepository {
       });
   }
 
-  findAllFriend1(user: string) {
-    return this.prismaService.friend
+  async findAllFriend1(user: string) {
+    return await this.prismaService.friend
       .findMany({
         where: {
           userUuid1: user,
@@ -58,8 +78,8 @@ export class SchedulerRepository {
       });
   }
 
-  findAllFriend2(user: string) {
-    return this.prismaService.friend
+  async findAllFriend2(user: string) {
+    return await this.prismaService.friend
       .findMany({
         where: {
           userUuid2: user,
@@ -80,7 +100,7 @@ export class SchedulerRepository {
       });
   }
 
-  addTodo(userid: string, todo: TodoDto) {
+  async addTodo(userid: string, todo: TodoDto) {
     return this.prismaService.schedule
       .create({
         data: {
@@ -105,7 +125,7 @@ export class SchedulerRepository {
       });
   }
 
-  createFriendRequest(
+  async createFriendRequest(
     senderUuid: string,
     receiverUuid: string,
     message: string,
@@ -131,7 +151,7 @@ export class SchedulerRepository {
       });
   }
 
-  acceptRequest(requestId: number, request: boolean) {
+  async acceptRequest(requestId: number, request: boolean) {
     return this.prismaService.friendRequest
       .update({
         where: { id: requestId },
@@ -151,7 +171,7 @@ export class SchedulerRepository {
       });
   }
 
-  createFriendShip(senderId, receiverId) {
+  async createFriendShip(senderId, receiverId) {
     return this.prismaService.friend
       .create({
         data: {
@@ -171,7 +191,7 @@ export class SchedulerRepository {
       });
   }
 
-  findFriendRequest(requestId: number) {
+  async findFriendRequest(requestId: number) {
     return this.prismaService.friendRequest
       .findUnique({
         where: { id: requestId },
@@ -192,7 +212,7 @@ export class SchedulerRepository {
       });
   }
 
-  deleteFriendRequest(requestId: number) {
+  async deleteFriendRequest(requestId: number) {
     return this.prismaService.friendRequest
       .delete({
         where: {
@@ -211,7 +231,7 @@ export class SchedulerRepository {
       });
   }
 
-  findUserById(id: string) {
+  async findUserById(id: string) {
     return this.prismaService.user
       .findUnique({
         where: { id },
@@ -227,7 +247,7 @@ export class SchedulerRepository {
       });
   }
 
-  deleteFriend(id: number) {
+  async deleteFriend(id: number) {
     return this.prismaService.friend
       .delete({
         where: {
@@ -244,7 +264,7 @@ export class SchedulerRepository {
       });
   }
 
-  findFriendId(user1: string, user2: string) {
+  async findFriendId(user1: string, user2: string) {
     return this.prismaService.friend
       .findFirst({
         where: {
@@ -263,39 +283,81 @@ export class SchedulerRepository {
       });
   }
 
-  updateSchedule(user, id: number, updateData: updateScheduleDto) {
-    return this.prismaService.schedule.update({
-      where: {
-        userId: user,
-        id,
-      },
-      data: updateData,
-    });
+  async updateSchedule(user, id: number, updateData: updateScheduleDto) {
+    return this.prismaService.schedule
+      .update({
+        where: {
+          userId: user,
+          id,
+        },
+        data: updateData,
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in updateSchedule',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in updateSchedule',
+        );
+      });
   }
 
-  deleteSchedule(user, id: number) {
-    console.log(`${user}'s ${id} schedule deleted.`);
-    return this.prismaService.schedule.delete({
-      where: {
-        id,
-        userId: user,
-      },
-    });
+  async deleteSchedule(user: string, id: number) {
+    console.log(`${user}'s ${id} schedule is deleted.`);
+    return this.prismaService.schedule
+      .delete({
+        where: {
+          id,
+          userId: user,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in deleteSchedule',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in deleteSchedule',
+        );
+      });
   }
 
-  findSchedule(user, id: number) {
-    return this.prismaService.schedule.findUnique({
-      where: {
-        id,
-        userId: user,
-      },
-    });
+  async findSchedule(user: string, id: number) {
+    return this.prismaService.schedule
+      .findUnique({
+        where: {
+          id,
+          userId: user,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findSchedule',
+          );
+        }
+        throw new InternalServerErrorException('unknown error in findSchedule');
+      });
   }
 
-  findUserIdByUUid(uuid: string) {
-    return this.prismaService.user.findUnique({
-      where: { uuid },
-      select: { id: true },
-    });
+  async findUserIdByUUid(uuid: string) {
+    return this.prismaService.user
+      .findUnique({
+        where: { uuid },
+        select: { id: true },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            'database error in findUserIdByUUid',
+          );
+        }
+        throw new InternalServerErrorException(
+          'unknown error in findUserIdByUUid',
+        );
+      });
   }
 }

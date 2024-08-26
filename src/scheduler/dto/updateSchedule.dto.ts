@@ -1,4 +1,4 @@
-import { ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { ApiOperation, ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDate,
@@ -9,37 +9,13 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { TodoDto } from './todo.dto';
 
-export class updateScheduleDto {
+export class updateScheduleDto extends PartialType(TodoDto) {
   @ApiProperty()
   @IsNotEmpty()
   @IsInt()
   id: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  body?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsDate()
-  startingDate?: Date;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsDate()
-  endingDate?: Date;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsInt()
-  cycle?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
